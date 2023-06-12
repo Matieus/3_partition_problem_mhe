@@ -28,13 +28,13 @@ bool sum_of_problem_is_divided_by_3(int sum_of_problem) {
 }
 
 
-void show_solution_of_problem(solution_t solution){
+void show_solution_of_problem(solution_t solution) {
     for (auto i: solution) {
         // print solution by 1 set of 3
     }
 }
 
-int sum_of_set(set_of_3_int set_of_3ints){
+int sum_of_set(set_of_3_int set_of_3ints) {
     int sum = 0;
     for (auto i: set_of_3ints)
         sum += set_of_3ints[i];
@@ -42,28 +42,23 @@ int sum_of_set(set_of_3_int set_of_3ints){
 }
 
 
-
-
-problem_t generate_random_problem(int number_of_sets_by_3){
+problem_t generate_random_problem(int number_of_sets_by_3, int min_rd, int max_rd) {
     std::vector<int> problem_set;
-    std::uniform_int_distribution<int> random(1, 30);
+    std::uniform_int_distribution<int> random(min_rd, max_rd);
 
-    for(int i = 0; i < number_of_sets_by_3 * 3; i++){
+    for (int i = 0; i < number_of_sets_by_3 * 3; i++) {
         problem_set.push_back(random(gen));
     }
 
     int sum = sum_of_problem(problem_set);
-    int counter = 0;
 
-    while(sum % number_of_sets_by_3 != 0){
+    while (sum % number_of_sets_by_3 != 0) {
         problem_set[random(rd)] += 1;
+        sum = sum_of_problem(problem_set);
     }
 
     return problem_set;
 }
-
-
-
 
 
 int main() {}
