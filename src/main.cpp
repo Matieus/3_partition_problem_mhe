@@ -2,10 +2,15 @@
 #include <vector>
 #include <string>
 #include <array>
+#include <random>
+
 
 using problem_t = std::vector<int>;
 using set_of_3_int = std::array<int, 3>;
 using solution_t = std::vector<set_of_3_int>;
+
+std::random_device rd;
+std::mt19937 gen(rd());
 
 
 int sum_of_problem(problem_t problem) {
@@ -35,6 +40,30 @@ int sum_of_set(set_of_3_int set_of_3ints){
         sum += set_of_3ints[i];
     return sum;
 }
+
+
+
+
+problem_t generate_random_problem(int number_of_sets_by_3){
+    std::vector<int> problem_set;
+    std::uniform_int_distribution<int> random(1, 30);
+
+    for(int i = 0; i < number_of_sets_by_3 * 3; i++){
+        problem_set.push_back(random(gen));
+    }
+
+    int sum = sum_of_problem(problem_set);
+    int counter = 0;
+
+    while(sum % number_of_sets_by_3 != 0){
+        problem_set[random(rd)] += 1;
+    }
+
+    return problem_set;
+}
+
+
+
 
 
 int main() {}
