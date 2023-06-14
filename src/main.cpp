@@ -8,12 +8,14 @@ int sum_of_set(std::vector<int> set) {
     int sum_of_numbers = 0;
     for (int number: set)
         sum_of_numbers += number;
+
+    return sum_of_numbers;
 }
 
 using problem_t = std::vector<int>;
 using set_of_3_int = std::vector<int>;
 
-class solution_t : public std::vector<set_of_3_int> {
+class solution_t : public std::vector<int> {
     std::shared_ptr<problem_t> problem;
 
     solution_t(std::shared_ptr<problem_t> problem_) : problem(problem_) {
@@ -75,14 +77,49 @@ problem_t random_modify(problem_t problem_set, int min_rd, int max_rd) {
     return problem_set;
 }
 
-double goal_function(solution_t solution, int average) {
+
+double goal_function(std::vector<int> solution, int average) {
     double result;
 
-    for (auto set_of_3: solution) {
-        if (sum_of_set(set_of_3) == average)
+    std::vector<int> set_of_3;
+    for (int i = 0; i < solution.size(); i += 3) {
+        set_of_3 = {
+                solution[i],
+                solution[i + 1],
+                solution[i + 2]
+        };
+
+        std::cout << "sum of set: ";
+        std::cout << sum_of_set(set_of_3) << std::endl;
+
+        if (sum_of_set(set_of_3) == average) {
             result += 1;
+        }
     }
-    return result / solution.size();
+    return result / (solution.size() / 3);
+
 }
 
-int main() {}
+/*
+solution_t random_hillclimb(solution_t solution) {
+    for (int i = 0; i < 5040; i++) {
+        auto new_solution = random_modify(solution);
+        if (new_solution.goal() <= goal_function(solution)) {
+            solution = new_solution;
+            //std::cout << i << " " << solution << "  " << solution << std::endl;
+        }
+    }
+    return solution;
+}
+*/
+
+solution_t brute_force(problem_t problem);
+
+
+int main() {
+    problem_t problem = {4, 5, 6, 5, 5, 5};
+    double result_of_goal;
+    result_of_goal = goal_function(problem, 15);
+    std::cout << "result: ";
+    std::cout << result_of_goal;
+}
