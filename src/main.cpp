@@ -1,8 +1,14 @@
 #include <iostream>
-#include <vector>
-#include <string>
-#include <random>
+
+#include <algorithm>
+#include <array>
 #include <memory>
+#include <numeric>
+#include <random>
+#include <string>
+#include <vector>
+#include <iomanip>
+
 
 int sum_of_set(std::vector<int> set) {
     int sum_of_numbers = 0;
@@ -14,6 +20,7 @@ int sum_of_set(std::vector<int> set) {
 
 using problem_t = std::vector<int>;
 using set_of_3_int = std::vector<int>;
+
 
 class solution_t : public std::vector<int> {
     std::shared_ptr<problem_t> problem;
@@ -45,11 +52,18 @@ bool sum_of_problem_is_divided_by_3(int sum_of_problem) {
 
 
 void show_solution_of_problem(solution_t solution) {
-    for (auto set_of_3: solution) {
-        // std::cout << set_of_3 << sum_of_set(set_of_3) << std::endl;
+    std::vector<int> set_of_3;
+    for (int i = 0; i < solution.size(); i += 3) {
+        set_of_3 = {
+                solution[i],
+                solution[i + 1],
+                solution[i + 2]
+        };
+
+        //std::cout << set_of_3 << std::endl;
+
     }
 }
-
 
 problem_t generate_random_problem(int number_of_sets_by_3, int min_rd, int max_rd) {
     std::vector<int> problem_set;
@@ -69,7 +83,7 @@ problem_t generate_random_problem(int number_of_sets_by_3, int min_rd, int max_r
     return problem_set;
 }
 
-problem_t random_modify(problem_t problem_set, int min_rd, int max_rd) {
+problem_t random_value_modify(problem_t problem_set, int min_rd, int max_rd) {
     std::uniform_int_distribution<int> random_idx(0, problem_set.size());
     std::uniform_int_distribution<int> random_value(min_rd, max_rd);
 
@@ -89,8 +103,8 @@ double goal_function(std::vector<int> solution, int average) {
                 solution[i + 2]
         };
 
-        std::cout << "sum of set: ";
-        std::cout << sum_of_set(set_of_3) << std::endl;
+        //std::cout << "sum of set: ";
+        //std::cout << sum_of_set(set_of_3) << std::endl;
 
         if (sum_of_set(set_of_3) == average) {
             result += 1;
@@ -113,13 +127,50 @@ solution_t random_hillclimb(solution_t solution) {
 }
 */
 
-solution_t brute_force(problem_t problem);
+//solution_t brute_force(problem_t problem);
+
+std::vector<int> random_modify(std::vector<int> current_solution) {
+    std::uniform_int_distribution<int> random_idx(0, current_solution.size());
+    int a = random_idx(rd);
+    int b = random_idx(rd);
+    if (a == b) {
+        b = (b + 1) & current_solution.size();
+    }
+    std::swap(current_solution[a], current_solution[b]);
+    return current_solution;
+}
 
 
 int main() {
-    problem_t problem = {4, 5, 6, 5, 5, 5};
-    double result_of_goal;
-    result_of_goal = goal_function(problem, 15);
+    // 5,5,5  4,5,6  4,4,7
+    problem_t problem = {4, 5, 5, 5, 5, 6, 7, 4, 4};
+    int avarage = sum_of_set(problem) / (problem.size() / 3);
+    std::cout << avarage << std::endl;
+
+    double current_goal = goal_function(problem, avarage);
+    problem_t current_solution = problem;
+
+    double better_goal;
+    problem_t better_solution = problem;
+
     std::cout << "result: ";
-    std::cout << result_of_goal;
+    std::cout << current_goal << std::endl;
+
+    for (int i = 0; i < 10000; i++) {
+        better_solution = random_modify(current_solution);
+        better_goal = goal_function(better_solution, avarage);
+
+        if (better_goal > current_goal) {
+            current_goal = better_goal;
+            current_solution = better_solution;
+
+            std::cout << "result: ";
+            std::cout << current_goal << std::endl;
+
+            std::cout << "iteration: ";
+            std::cout << i << std::endl;
+        }
+
+    }
+
 }
