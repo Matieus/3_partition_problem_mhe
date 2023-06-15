@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <iomanip>
+#include <random>
+// #include <format>
 
 
 int sum_of_set(std::vector<int> set) {
@@ -51,17 +53,20 @@ bool sum_of_problem_is_divided_by_3(int sum_of_problem) {
 }
 
 
-void show_solution_of_problem(solution_t solution) {
-    std::vector<int> set_of_3;
+void show_solution_of_problem(std::vector<int> solution) {
+
+    //std::cout << std::format("Hello {}!\n", "world");
+    int sum;
     for (int i = 0; i < solution.size(); i += 3) {
-        set_of_3 = {
-                solution[i],
-                solution[i + 1],
-                solution[i + 2]
-        };
-
-        //std::cout << set_of_3 << std::endl;
-
+        for (int j = 0; j < 3; j++) {
+            sum += solution[i + j];
+            std::cout << std::to_string(solution[i + j]);
+            std::cout << ", ";
+        }
+        std::cout << "sum: ";
+        std::cout << sum;
+        std::cout << std::endl;
+        sum = 0;
     }
 }
 
@@ -140,21 +145,30 @@ std::vector<int> random_modify(std::vector<int> current_solution) {
     return current_solution;
 }
 
+std::vector<int> random_shuffle(std::vector<int> problem) {
+    std::shuffle(problem.begin(), problem.end(), rd);
+    return problem;
+
+}
+
 
 int main() {
-    // 5,5,5  4,5,6  4,4,7
-    problem_t problem = {4, 5, 5, 5, 5, 6, 7, 4, 4};
+    // 5,5,5  4,5,6  4,4,7  9,3,3
+    problem_t problem = {4, 5, 5, 5, 5, 6, 7, 4, 4, 9, 3, 3};
+    problem = random_shuffle(problem);
+
     int avarage = sum_of_set(problem) / (problem.size() / 3);
-    std::cout << avarage << std::endl;
 
     double current_goal = goal_function(problem, avarage);
     problem_t current_solution = problem;
+    show_solution_of_problem(problem);
+    std::cout << std::endl;
 
     double better_goal;
-    problem_t better_solution = problem;
+    problem_t better_solution;
 
     std::cout << "result: ";
-    std::cout << current_goal << std::endl;
+    std::cout << current_goal << std::endl << std::endl;
 
     for (int i = 0; i < 10000; i++) {
         better_solution = random_modify(current_solution);
@@ -169,8 +183,15 @@ int main() {
 
             std::cout << "iteration: ";
             std::cout << i << std::endl;
+            show_solution_of_problem(current_solution);
+            std::cout << std::endl;
+
+
+            if (better_goal == 1)
+                break;
         }
 
     }
+
 
 }
