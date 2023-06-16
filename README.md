@@ -7,4 +7,3 @@ real numbers from 0 to 1 |
 0 - worst |
 1 - best |
 0 < x < 1 - partially correct |
-

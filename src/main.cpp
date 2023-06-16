@@ -57,6 +57,11 @@ void show_solution_of_problem(std::vector<int> solution) {
 
     //std::cout << std::format("Hello {}!\n", "world");
     int sum;
+    for (int i = 0; i < solution.size(); i++)
+        std::cout << solution[i];
+
+    std::cout << std::endl;
+
     for (int i = 0; i < solution.size(); i += 3) {
         for (int j = 0; j < 3; j++) {
             sum += solution[i + j];
@@ -98,7 +103,7 @@ problem_t random_value_modify(problem_t problem_set, int min_rd, int max_rd) {
 
 
 double goal_function(std::vector<int> solution, int average) {
-    double result;
+    double result = 0;
 
     std::vector<int> set_of_3;
     for (int i = 0; i < solution.size(); i += 3) {
@@ -107,9 +112,6 @@ double goal_function(std::vector<int> solution, int average) {
                 solution[i + 1],
                 solution[i + 2]
         };
-
-        //std::cout << "sum of set: ";
-        //std::cout << sum_of_set(set_of_3) << std::endl;
 
         if (sum_of_set(set_of_3) == average) {
             result += 1;
@@ -135,11 +137,19 @@ solution_t random_hillclimb(solution_t solution) {
 //solution_t brute_force(problem_t problem);
 
 std::vector<int> random_modify(std::vector<int> current_solution) {
-    std::uniform_int_distribution<int> random_idx(0, current_solution.size());
+    std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
     int a = random_idx(rd);
     int b = random_idx(rd);
     if (a == b) {
-        b = (b + 1) & current_solution.size();
+        b = (a + 1) & (current_solution.size() - 1);
+
+    }
+    if (b == current_solution.size()) {
+        std::cout << b;
+        std::cout << "sus B: ";
+        std::cout << current_solution[b] << std::endl;
+        throw std::invalid_argument("Dupa");
+
     }
     std::swap(current_solution[a], current_solution[b]);
     return current_solution;
@@ -154,12 +164,16 @@ std::vector<int> random_shuffle(std::vector<int> problem) {
 
 int main() {
     // 5,5,5  4,5,6  4,4,7  9,3,3
-    problem_t problem = {4, 5, 5, 5, 5, 6, 7, 4, 4, 9, 3, 3};
+    problem_t problem = {3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 7, 9};
+    //problem_t problem = {20, 23, 25, 30, 49, 45, 27, 30, 30, 40, 22, 19};
     problem = random_shuffle(problem);
 
     int avarage = sum_of_set(problem) / (problem.size() / 3);
 
     double current_goal = goal_function(problem, avarage);
+    std::cout << "result: ";
+    std::cout << current_goal << std::endl;
+
     problem_t current_solution = problem;
     show_solution_of_problem(problem);
     std::cout << std::endl;
@@ -167,19 +181,19 @@ int main() {
     double better_goal;
     problem_t better_solution;
 
-    std::cout << "result: ";
-    std::cout << current_goal << std::endl << std::endl;
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 1000; i++) {
         better_solution = random_modify(current_solution);
         better_goal = goal_function(better_solution, avarage);
 
-        if (better_goal > current_goal) {
+        if (better_goal >= current_goal) {
             current_goal = better_goal;
             current_solution = better_solution;
 
             std::cout << "result: ";
             std::cout << current_goal << std::endl;
+            std::cout << "dist: ";
+            std::cout << current_solution.size() << std::endl;
 
             std::cout << "iteration: ";
             std::cout << i << std::endl;
@@ -192,6 +206,4 @@ int main() {
         }
 
     }
-
-
 }
