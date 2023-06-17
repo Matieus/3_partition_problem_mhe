@@ -71,6 +71,16 @@ std::ostream &operator<<(std::ostream &o, const solution_t solution) {
 
 }
 
+void print_results(solution_t solution, int i = NULL, double goal = NULL) {
+
+    if (goal == NULL)
+        goal = solution.goal();
+
+    std::cout << "goal: " << goal << std::endl;
+    std::cout << "iteration: " << i << std::endl;
+    std::cout << solution << std::endl;
+}
+
 std::random_device rd;
 std::mt19937 gen(rd());
 
@@ -144,8 +154,6 @@ solution_t random_modify(solution_t current_solution) {
 
     }
     std::swap(current_solution[a], current_solution[b]);
-    //std::cout << current_solution << std::endl;
-
     return current_solution;
 }
 
@@ -159,12 +167,15 @@ problem_t random_shuffle_problem(problem_t problem) {
 }
 
 
-solution_t random_hillclimb(solution_t solution, int avarage) {
+solution_t random_hillclimb(solution_t solution) {
+    print_results(solution);
+
     for (int i = 0; i < 5040; i++) {
         auto new_solution = random_modify(solution);
         if (new_solution.goal() >= solution.goal()) {
             solution = new_solution;
-            std::cout << i << " " << solution << "  " << solution.goal() << std::endl;
+            print_results(solution, i);
+
         }
     }
     return solution;
@@ -180,14 +191,12 @@ int main() {
     // 30,30,30  20,25,45  23,27,40  49,22,19
     problem_t problem_2 = {20, 23, 25, 30, 49, 45, 27, 30, 30, 40, 22, 19};
 
-    problem = random_shuffle_problem(problem);
+    problem = random_shuffle_problem(problem_2);
 
     auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
     double current_goal = current_solution.goal();
 
-    std::cout << "result: ";
-    std::cout << current_goal << std::endl;
-    std::cout << current_solution << std::endl;
+    print_results(current_solution,  -1, current_goal);
 
     solution_t better_solution = current_solution;
     double better_goal = 0;
@@ -200,18 +209,14 @@ int main() {
             current_goal = better_goal;
             current_solution = better_solution;
 
-            std::cout << "result: ";
-            std::cout << current_goal << std::endl;
-            //std::cout << "size: ";
-            //std::cout << current_solution.size() << std::endl;
-
-            std::cout << "iteration: ";
-            std::cout << i << std::endl;
-            std::cout << current_solution << std::endl;
+            print_results(current_solution, i, current_goal);
 
             if (better_goal == 1)
                 break;
         }
 
     }
+    std::cout << "random_hillclimb" << std::endl;
+    random_hillclimb(current_solution);
+
 }
