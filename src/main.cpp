@@ -1,61 +1,84 @@
 #include <iostream>
-
 #include <algorithm>
-#include <array>
 #include <memory>
 #include <numeric>
 #include <random>
 #include <string>
 #include <vector>
-#include <iomanip>
-#include <random>
-// #include <format>
-
-
-int sum_of_set(std::vector<int> set) {
-    int sum_of_numbers = 0;
-    for (int number: set)
-        sum_of_numbers += number;
-
-    return sum_of_numbers;
-}
 
 using problem_t = std::vector<int>;
-using set_of_3_int = std::vector<int>;
-
 
 class solution_t : public std::vector<int> {
+public:
     std::shared_ptr<problem_t> problem;
+    int average;
 
-    solution_t(std::shared_ptr<problem_t> problem_) : problem(problem_) {
-
-    }
-    /* void  goal(){
-        double result = 0;
-        for (int i = 0; i < this->size(); i++){
-            result
-
+    int sum_of_problem() {
+        int sum_of_numbers = 0;
+        for (auto number: *this) {
+            sum_of_numbers += number;
         }
-        return result;
-    }*/
+
+        return sum_of_numbers;
+    }
+
+    static solution_t for_problem(std::shared_ptr<problem_t> problem_) {
+        solution_t solution;
+
+        for (auto number: *problem_)
+            solution.push_back(number);
+        solution.problem = problem_;
+        solution.average = solution.sum_of_problem() * 3 / problem_->size();
+        return solution;
+    }
+
+    double goal() {
+        double result = 0;
+        auto &s = *this;
+        int sum;
+
+        for (int i = 0; i < size(); i += 3) {
+            sum = s[i] + s[i + 1] + s[i + 2];
+
+            if (sum == s.average) {
+                result += 1;
+            }
+        }
+        return result * 3 / size();
+    };
 };
+
+
+std::ostream &operator<<(std::ostream &o, const problem_t v) {
+    o << "{";
+    for (auto e: v)
+        o << e << ", ";
+    o << "}";
+    return o;
+}
+
+std::ostream &operator<<(std::ostream &o, const solution_t solution) {
+    int sum = 0;
+    for (int i = 0; i < solution.size(); i += 3) {
+        for (int j = 0; j < 3; j++) {
+            o << solution[i + j] << ", ";
+            sum += solution[i + j];
+        }
+        o << "sum: " << sum << std::endl;
+        sum = 0;
+    }
+    return o;
+
+}
 
 std::random_device rd;
 std::mt19937 gen(rd());
-
 
 bool size_of_problem_is_divided_by_3(problem_t problem) {
     return problem.size() % 3 == 0;
 }
 
-bool sum_of_problem_is_divided_by_3(int sum_of_problem) {
-    return sum_of_problem % 3 == 0;
-}
-
-
 void show_solution_of_problem(std::vector<int> solution) {
-
-    //std::cout << std::format("Hello {}!\n", "world");
     int sum;
     for (int i = 0; i < solution.size(); i++)
         std::cout << solution[i];
@@ -75,6 +98,15 @@ void show_solution_of_problem(std::vector<int> solution) {
     }
 }
 
+int sum_of_problem(problem_t problem) {
+    int sum_of_numbers = 0;
+    for (int number: problem)
+        sum_of_numbers += number;
+
+    return sum_of_numbers;
+}
+
+
 problem_t generate_random_problem(int number_of_sets_by_3, int min_rd, int max_rd) {
     std::vector<int> problem_set;
     std::uniform_int_distribution<int> random(min_rd, max_rd);
@@ -83,11 +115,11 @@ problem_t generate_random_problem(int number_of_sets_by_3, int min_rd, int max_r
         problem_set.push_back(random(gen));
     }
 
-    int sum = sum_of_set(problem_set);
+    int sum = sum_of_problem(problem_set);
 
     while (sum % number_of_sets_by_3 != 0) {
         problem_set[random(rd)] += 1;
-        sum = sum_of_set(problem_set);
+        sum = sum_of_problem(problem_set);
     }
 
     return problem_set;
@@ -101,42 +133,9 @@ problem_t random_value_modify(problem_t problem_set, int min_rd, int max_rd) {
     return problem_set;
 }
 
-
-double goal_function(std::vector<int> solution, int average) {
-    double result = 0;
-
-    std::vector<int> set_of_3;
-    for (int i = 0; i < solution.size(); i += 3) {
-        set_of_3 = {
-                solution[i],
-                solution[i + 1],
-                solution[i + 2]
-        };
-
-        if (sum_of_set(set_of_3) == average) {
-            result += 1;
-        }
-    }
-    return result / (solution.size() / 3);
-
-}
-
-/*
-solution_t random_hillclimb(solution_t solution) {
-    for (int i = 0; i < 5040; i++) {
-        auto new_solution = random_modify(solution);
-        if (new_solution.goal() <= goal_function(solution)) {
-            solution = new_solution;
-            //std::cout << i << " " << solution << "  " << solution << std::endl;
-        }
-    }
-    return solution;
-}
-*/
-
 //solution_t brute_force(problem_t problem);
 
-std::vector<int> random_modify(std::vector<int> current_solution) {
+solution_t random_modify(solution_t current_solution) {
     std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
     int a = random_idx(rd);
     int b = random_idx(rd);
@@ -144,62 +143,71 @@ std::vector<int> random_modify(std::vector<int> current_solution) {
         b = (a + 1) & (current_solution.size() - 1);
 
     }
-    if (b == current_solution.size()) {
-        std::cout << b;
-        std::cout << "sus B: ";
-        std::cout << current_solution[b] << std::endl;
-        throw std::invalid_argument("Dupa");
-
-    }
     std::swap(current_solution[a], current_solution[b]);
+    //std::cout << current_solution << std::endl;
+
     return current_solution;
 }
 
-std::vector<int> random_shuffle(std::vector<int> problem) {
+void random_shuffle(solution_t solution) {
+    std::shuffle(solution.begin(), solution.end(), rd);
+}
+
+problem_t random_shuffle_problem(problem_t problem) {
     std::shuffle(problem.begin(), problem.end(), rd);
     return problem;
+}
 
+
+solution_t random_hillclimb(solution_t solution, int avarage) {
+    for (int i = 0; i < 5040; i++) {
+        auto new_solution = random_modify(solution);
+        if (new_solution.goal() >= solution.goal()) {
+            solution = new_solution;
+            std::cout << i << " " << solution << "  " << solution.goal() << std::endl;
+        }
+    }
+    return solution;
 }
 
 
 int main() {
-    // 5,5,5  4,5,6  4,4,7  9,3,3
-    problem_t problem = {3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 7, 9};
-    //problem_t problem = {20, 23, 25, 30, 49, 45, 27, 30, 30, 40, 22, 19};
-    problem = random_shuffle(problem);
+    using namespace std;
 
-    int avarage = sum_of_set(problem) / (problem.size() / 3);
+    // 5,5,5  4,5,6  4,4,7  9,3,3  2,8,5  1,3,11
+    problem_t problem = {1, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 6, 7, 8, 9, 11};
 
-    double current_goal = goal_function(problem, avarage);
+    // 30,30,30  20,25,45  23,27,40  49,22,19
+    problem_t problem_2 = {20, 23, 25, 30, 49, 45, 27, 30, 30, 40, 22, 19};
+
+    problem = random_shuffle_problem(problem);
+
+    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
+    double current_goal = current_solution.goal();
+
     std::cout << "result: ";
     std::cout << current_goal << std::endl;
+    std::cout << current_solution << std::endl;
 
-    problem_t current_solution = problem;
-    show_solution_of_problem(problem);
-    std::cout << std::endl;
-
-    double better_goal;
-    problem_t better_solution;
-
+    solution_t better_solution = current_solution;
+    double better_goal = 0;
 
     for (int i = 0; i < 1000; i++) {
-        better_solution = random_modify(current_solution);
-        better_goal = goal_function(better_solution, avarage);
+        better_solution = random_modify(better_solution);
+        better_goal = better_solution.goal();
 
-        if (better_goal >= current_goal) {
+        if (better_goal > current_goal) {
             current_goal = better_goal;
             current_solution = better_solution;
 
             std::cout << "result: ";
             std::cout << current_goal << std::endl;
-            std::cout << "dist: ";
-            std::cout << current_solution.size() << std::endl;
+            //std::cout << "size: ";
+            //std::cout << current_solution.size() << std::endl;
 
             std::cout << "iteration: ";
             std::cout << i << std::endl;
-            show_solution_of_problem(current_solution);
-            std::cout << std::endl;
-
+            std::cout << current_solution << std::endl;
 
             if (better_goal == 1)
                 break;
