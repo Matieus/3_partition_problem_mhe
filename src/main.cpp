@@ -45,7 +45,7 @@ public:
             }
         }
         return result * 3 / size();
-    };
+    }
 };
 
 
@@ -143,8 +143,6 @@ problem_t random_value_modify(problem_t problem_set, int min_rd, int max_rd) {
     return problem_set;
 }
 
-//solution_t brute_force(problem_t problem);
-
 solution_t random_modify(solution_t current_solution) {
     std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
     int a = random_idx(rd);
@@ -157,8 +155,9 @@ solution_t random_modify(solution_t current_solution) {
     return current_solution;
 }
 
-void random_shuffle(solution_t solution) {
+solution_t random_shuffle(solution_t solution) {
     std::shuffle(solution.begin(), solution.end(), rd);
+    return solution;
 }
 
 problem_t random_shuffle_problem(problem_t problem) {
@@ -166,14 +165,14 @@ problem_t random_shuffle_problem(problem_t problem) {
     return problem;
 }
 
-
 solution_t random_hillclimb(solution_t solution) {
     print_results(solution);
 
     for (int i = 0; i < 5040; i++) {
         auto new_solution = random_modify(solution);
-        if (new_solution.goal() >= solution.goal()) {
+        if (new_solution.goal() > solution.goal()) {
             solution = new_solution;
+            std::cout << "[random_hillclimb]" << std::endl;
             print_results(solution, i);
 
         }
@@ -181,6 +180,29 @@ solution_t random_hillclimb(solution_t solution) {
     return solution;
 }
 
+solution_t brute_force(solution_t solution) {
+    print_results(solution);
+    auto best_solution = solution;
+
+    int i = 0;
+    double goal = 0;
+    double best_goal = 0;
+
+    do {
+        goal = solution.goal();
+
+        if (goal > best_goal) {
+            best_solution = solution;
+            best_goal = goal;
+
+            std::cout << "[brute_force]" << std::endl;
+            print_results(best_solution, i, goal);
+        }
+        i++;
+
+    } while (std::next_permutation(solution.begin(), solution.end()));
+    return best_solution;
+}
 
 int main() {
     using namespace std;
@@ -196,7 +218,7 @@ int main() {
     auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
     double current_goal = current_solution.goal();
 
-    print_results(current_solution,  -1, current_goal);
+    print_results(current_solution, -1, current_goal);
 
     solution_t better_solution = current_solution;
     double better_goal = 0;
@@ -216,7 +238,12 @@ int main() {
         }
 
     }
-    std::cout << "random_hillclimb" << std::endl;
+    std::cout << "_______________" << std::endl;
+    current_solution = random_shuffle(current_solution);
     random_hillclimb(current_solution);
+
+    std::cout << "_______________" << std::endl;
+    current_solution = random_shuffle(current_solution);
+    brute_force(current_solution);
 
 }
