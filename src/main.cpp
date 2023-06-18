@@ -11,7 +11,7 @@ using problem_t = std::vector<int>;
 class solution_t : public std::vector<int> {
 public:
     std::shared_ptr<problem_t> problem;
-    int average;
+    int average; // average for each subset of 3 items
 
     int sum_of_problem() {
         int sum_of_numbers = 0;
@@ -33,6 +33,9 @@ public:
     }
 
     double goal() {
+        // returns values from 0 to 1
+        // result 1 is the best
+
         double result = 0;
         auto &s = *this;
         int sum;
@@ -117,17 +120,17 @@ int sum_of_problem(problem_t problem) {
 }
 
 
-problem_t generate_random_problem(int number_of_sets_by_3, int min_rd, int max_rd) {
+problem_t generate_random_problem(int number_of_subsets, int min_rd, int max_rd) {
     std::vector<int> problem_set;
     std::uniform_int_distribution<int> random(min_rd, max_rd);
 
-    for (int i = 0; i < number_of_sets_by_3 * 3; i++) {
+    for (int i = 0; i < number_of_subsets * 3; i++) {
         problem_set.push_back(random(gen));
     }
 
     int sum = sum_of_problem(problem_set);
 
-    while (sum % number_of_sets_by_3 != 0) {
+    while (sum % number_of_subsets != 0) {
         problem_set[random(rd)] += 1;
         sum = sum_of_problem(problem_set);
     }
