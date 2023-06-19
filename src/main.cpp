@@ -278,18 +278,6 @@ solution_t test_solution(solution_t solution) {
     }
     return solution;
 
-//    std::cout << "_______________" << std::endl;
-//    current_solution = random_shuffle(current_solution);
-//    random_hillclimb(current_solution);
-//
-//    std::cout << "_______________" << std::endl;
-//    current_solution = random_shuffle(current_solution);
-//    brute_force(current_solution);
-//
-//    std::cout << "_______________" << std::endl;
-//    current_solution = random_shuffle(current_solution);
-//    random_hillclimb(current_solution);
-
 }
 
 int main() {
