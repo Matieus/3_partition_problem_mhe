@@ -5,6 +5,9 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <list>
+#include <set>
+
 
 using problem_t = std::vector<int>;
 
@@ -190,7 +193,7 @@ solution_t best_neighbour(solution_t current_solution) {
 
     solution_t best_solution = current_solution;
 
-    for (auto neighbour : neighbours) {
+    for (auto neighbour: neighbours) {
         if (best_solution.goal() <= neighbour.goal()) {
             best_solution = neighbour;
         }
@@ -225,6 +228,52 @@ solution_t random_hill_climb(solution_t solution) {
         }
     }
     return solution;
+}
+
+
+solution_t tabu_search(solution_t solution) {
+    std::list<solution_t> tabu_list;
+    tabu_list.push_back(solution);
+
+    std::set<solution_t> tabu_set;
+    tabu_set.insert(solution);
+
+    solution_t best_global = solution;
+
+    for (int i = 0; i < 5040; i++) {
+        auto neighbours = generate_neighbours(tabu_list.back());
+
+        neighbours.erase(
+                std::remove_if(
+                        neighbours.begin(), neighbours.end(),
+                        [&](solution_t x) { return tabu_set.find(x) != tabu_set.end(); }
+                ),
+                neighbours.end()
+        );
+
+
+        if (neighbours.size() == 0) {
+            std::cout << "TABU: tail" << std::endl;
+            print_results(best_global);
+            return best_global;
+        }
+
+
+        auto next_solution = *std::max_element(
+                neighbours.begin(),
+                neighbours.end(),
+                [](auto l, auto r) {
+                    return l.goal() < r.goal();
+                }
+        );
+
+        if (next_solution.goal() >= best_global.goal()) {
+            best_global = next_solution;
+        }
+        tabu_list.push_back(next_solution);
+    }
+
+    return best_global;
 }
 
 
@@ -289,7 +338,10 @@ int main() {
     // 30,30,30  20,25,45  23,27,40  49,22,19
     problem_t problem_2 = {20, 23, 25, 30, 49, 45, 27, 30, 30, 40, 22, 19};
 
-    problem = random_shuffle_problem(problem_2);
+    // 5,5,5  4,5,6  4,4,7  9,3,3  2,8,5  1,3,11  1,1,13, 1,2,12
+    problem_t problem_3 = {1, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 6, 7, 8, 9, 11, 1, 1, 13, 1, 2, 12};
+
+    problem = random_shuffle_problem(problem_3);
 
     auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
 
@@ -298,7 +350,7 @@ int main() {
     current_solution = random_shuffle(current_solution);
     print_results(current_solution);
 
-    current_solution = deterministic_hill_climb(current_solution);
+    current_solution = tabu_search(current_solution);
     print_results(current_solution);
 
 
