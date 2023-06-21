@@ -7,6 +7,7 @@
 #include <vector>
 #include <list>
 #include <set>
+#include <functional>
 
 
 using problem_t = std::vector<int>;
@@ -64,17 +65,20 @@ std::ostream &operator<<(std::ostream &o, const problem_t v) {
 }
 
 std::ostream &operator<<(std::ostream &o, const solution_t solution) {
-    int sum = 0;
-    for (int i = 0; i < solution.size(); i += 3) {
-        for (int j = 0; j < 3; j++) {
-            o << solution[i + j] << ", ";
-            sum += solution[i + j];
-        }
-        o << "sum: " << sum << std::endl;
-        sum = 0;
-    }
-    return o;
+    o << "{";
+    for (int i = 0; i < solution.size(); i++) {
+        if (i % 3 == 0)
+            o << "{" << solution[i] << " ";
 
+        else if (i % 3 == 1)
+            o << solution[i] << " ";
+
+        else if (i % 3 == 2)
+            o << solution[i] << "}";
+
+    }
+    o << "}";
+    return o;
 }
 
 void print_results(solution_t solution, int i = NULL, double goal = NULL) {
@@ -85,8 +89,19 @@ void print_results(solution_t solution, int i = NULL, double goal = NULL) {
     std::cout << "goal: " << goal << std::endl;
     if (i != NULL)
         std::cout << "iteration: " << i << std::endl;
-    std::cout << solution << std::endl;
+
+    int sum = 0;
+    for (int j = 0; j < solution.size(); j += 3) {
+        for (int k = 0; k < 3; k++) {
+            std::cout << solution[j + k] << ", ";
+            sum += solution[j + k];
+        }
+        std::cout << "sum: " << sum << std::endl;
+        sum = 0;
+    }
+    std::cout << "\n\n";
 }
+
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -276,6 +291,34 @@ solution_t tabu_search(solution_t solution) {
     return best_global;
 }
 
+solution_t sim_annealing(const solution_t solution, std::function<double(int)> T) {
+    auto best_solution = solution;
+    auto s_curren_solution = solution;
+
+
+    for (int i = 0; i < 5040; i++) {
+        auto new_solution = random_modify(s_curren_solution);
+        if (new_solution.goal() >= s_curren_solution.goal()) {
+            s_curren_solution = new_solution;
+            if (new_solution.goal() >= best_solution.goal()){
+                best_solution = new_solution;
+
+                std::cout << best_solution << " " << best_solution.goal() << std::endl;
+            }
+
+        }
+        else {
+            std::uniform_real_distribution<double> u(0.0, 1.0);
+            if (
+                    u(rd) < std::exp(-std::abs(new_solution.goal() - s_curren_solution.goal())/T(i))
+                    ){
+                s_curren_solution = new_solution;
+            }
+
+        }
+    }
+    return best_solution;
+}
 
 solution_t brute_force(solution_t solution) {
     print_results(solution);
@@ -346,11 +389,19 @@ int main() {
     auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
 
 
+//    std::cout << "_______________" << std::endl;
+//    current_solution = random_shuffle(current_solution);
+//    print_results(current_solution);
+//
+//    current_solution = tabu_search(current_solution);
+//    print_results(current_solution);
+
+
     std::cout << "_______________" << std::endl;
     current_solution = random_shuffle(current_solution);
     print_results(current_solution);
 
-    current_solution = tabu_search(current_solution);
+    current_solution = sim_annealing(current_solution, [](int k){return 1000/k;});
     print_results(current_solution);
 
 
