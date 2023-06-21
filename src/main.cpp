@@ -65,17 +65,11 @@ std::ostream &operator<<(std::ostream &o, const problem_t v) {
 }
 
 std::ostream &operator<<(std::ostream &o, const solution_t solution) {
-    o << "{";
-    for (int i = 0; i < solution.size(); i++) {
-        if (i % 3 == 0)
+    o << "{ ";
+    for (int i = 0; i < solution.size(); i+=3) {
             o << "{" << solution[i] << " ";
-
-        else if (i % 3 == 1)
-            o << solution[i] << " ";
-
-        else if (i % 3 == 2)
-            o << solution[i] << "}";
-
+            o << solution[i+1] << " ";
+            o << solution[i+2] << "} ";
     }
     o << "}";
     return o;
