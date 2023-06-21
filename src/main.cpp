@@ -288,16 +288,20 @@ solution_t tabu_search(solution_t solution) {
 solution_t sim_annealing(const solution_t solution, std::function<double(int)> T) {
     auto best_solution = solution;
     auto s_curren_solution = solution;
+    int best_itr = 0;
 
 
-    for (int i = 0; i < 5040; i++) {
+    for (int i = 1; i < 5040; i++) {
         auto new_solution = random_modify(s_curren_solution);
         if (new_solution.goal() >= s_curren_solution.goal()) {
             s_curren_solution = new_solution;
             if (new_solution.goal() >= best_solution.goal()){
                 best_solution = new_solution;
 
-                std::cout << best_solution << " " << best_solution.goal() << std::endl;
+                if ((best_solution.goal() == 1) && (best_itr == 0))
+                    best_itr = i;
+
+                // std::cout << best_solution << " goal: " << best_solution.goal() << " itr: " << i << std::endl;
             }
 
         }
@@ -311,8 +315,11 @@ solution_t sim_annealing(const solution_t solution, std::function<double(int)> T
 
         }
     }
+    std::cout << best_itr << std::endl;
     return best_solution;
 }
+
+
 
 solution_t brute_force(solution_t solution) {
     print_results(solution);
@@ -380,7 +387,7 @@ int main() {
 
     problem = random_shuffle_problem(problem_3);
 
-    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
+//    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
 
 
 //    std::cout << "_______________" << std::endl;
@@ -391,10 +398,16 @@ int main() {
 //    print_results(current_solution);
 
 
-    std::cout << "_______________" << std::endl;
-    current_solution = random_shuffle(current_solution);
-    print_results(current_solution);
+//    current_solution = random_shuffle(current_solution);
+//    print_results(current_solution);
 
+    std::cout << "_______________" << std::endl;
+
+    problem_t problem_bad = { 2, 3, 3, 5, 5, 4, 5, 5, 12, 3, 9, 13, 8, 1, 6, 1, 11, 4, 7, 5, 4, 1, 2, 1};
+
+    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_bad));
+
+    std::cout << current_solution << std::endl;
     current_solution = sim_annealing(current_solution, [](int k){return 1000/k;});
     print_results(current_solution);
 
