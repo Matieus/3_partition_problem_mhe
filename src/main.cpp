@@ -10,6 +10,7 @@
 #include <functional>
 
 
+
 using problem_t = std::vector<int>;
 
 class solution_t : public std::vector<int> {
@@ -53,6 +54,41 @@ public:
         }
         return result * 3 / size();
     }
+
+    solution_t random_shuffle() {
+        auto &s = *this;
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::shuffle(s.begin(), s.end(), gen);
+        return s;
+    }
+
+    static solution_t random_solution(problem_t problem) {
+
+        auto solution = solution_t::for_problem(std::make_shared<problem_t>(problem));
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::shuffle(solution.begin(), solution.end(), gen);
+        return solution;
+    }
+
+     solution_t random_modify() {
+
+        auto current_solution = *this;
+        std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        int a = random_idx(gen);
+        int b = random_idx(gen);
+        if (a == b) {
+            b = (a + 1) & (current_solution.size() - 1);
+
+        }
+        std::swap(current_solution[a], current_solution[b]);
+        return current_solution;
+    }
+
 };
 
 
@@ -144,7 +180,7 @@ problem_t generate_random_problem(int number_of_subsets, int min_rd, int max_rd)
     int sum = sum_of_problem(problem_set);
 
     while (sum % number_of_subsets != 0) {
-        problem_set[random(rd)] += 1;
+        problem_set[random(gen)] += 1;
         sum = sum_of_problem(problem_set);
     }
 
@@ -155,14 +191,14 @@ problem_t random_value_modify(problem_t problem_set, int min_rd, int max_rd) {
     std::uniform_int_distribution<int> random_idx(0, problem_set.size());
     std::uniform_int_distribution<int> random_value(min_rd, max_rd);
 
-    problem_set[random_idx(rd)] += random_value(rd);
+    problem_set[random_idx(gen)] += random_value(gen);
     return problem_set;
 }
 
 solution_t random_modify(solution_t current_solution) {
     std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
-    int a = random_idx(rd);
-    int b = random_idx(rd);
+    int a = random_idx(gen);
+    int b = random_idx(gen);
     if (a == b) {
         b = (a + 1) & (current_solution.size() - 1);
 
@@ -172,12 +208,12 @@ solution_t random_modify(solution_t current_solution) {
 }
 
 solution_t random_shuffle(solution_t solution) {
-    std::shuffle(solution.begin(), solution.end(), rd);
+    std::shuffle(solution.begin(), solution.end(), gen);
     return solution;
 }
 
 problem_t random_shuffle_problem(problem_t problem) {
-    std::shuffle(problem.begin(), problem.end(), rd);
+    std::shuffle(problem.begin(), problem.end(), gen);
     return problem;
 }
 
@@ -288,7 +324,6 @@ solution_t tabu_search(solution_t solution) {
 solution_t sim_annealing(const solution_t solution, std::function<double(int)> T) {
     auto best_solution = solution;
     auto s_curren_solution = solution;
-
     for (int i = 1; i < 5040; i++) {
         auto new_solution = random_modify(s_curren_solution);
         if (new_solution.goal() >= s_curren_solution.goal()) {
@@ -300,7 +335,7 @@ solution_t sim_annealing(const solution_t solution, std::function<double(int)> T
         } else {
             std::uniform_real_distribution<double> u(0.0, 1.0);
             if (
-                    u(rd) < std::exp(-std::abs(new_solution.goal() - s_curren_solution.goal()) / T(i))
+                    u(gen) < std::exp(-std::abs(new_solution.goal() - s_curren_solution.goal()) / T(i))
                     ) {
                 s_curren_solution = new_solution;
             }
@@ -308,6 +343,132 @@ solution_t sim_annealing(const solution_t solution, std::function<double(int)> T
         }
     }
     return best_solution;
+}
+
+template<class T> //klasa szablonowa typem T
+class generic_algoritm_config_t {
+public:
+    int population_size;
+
+    virtual bool terminal_condition(std::vector<T>) = 0;
+
+    virtual std::vector<T> get_initial_population() = 0;
+
+    virtual double fitness(T) = 0;
+
+    virtual std::vector<T> selection(std::vector<double>, std::vector<T>) = 0;
+
+    virtual std::vector<T> crossover(std::vector<T>) = 0;
+
+    virtual std::vector<T> mutation(std::vector<T>) = 0;
+
+};
+
+
+class tsp_config_t : public generic_algoritm_config_t<solution_t> {
+public:
+    problem_t problem;
+    int iteration;
+    int max_iterations;
+
+    tsp_config_t(problem_t p, int i, int population_s){
+        problem = p;
+        iteration = 0;
+        max_iterations = i;
+        population_size = population_s;
+
+    }
+
+    virtual bool terminal_condition(std::vector<solution_t>){
+        iteration++;
+        return max_iterations >= iteration;
+    };
+
+    virtual std::vector<solution_t> get_initial_population() {
+        std::vector<solution_t> ret;
+        for (int i = 0; i < population_size; i++) {
+            ret.push_back(solution_t::random_solution(problem));
+            std::cout << problem << std::endl;
+
+        }
+        return ret;
+    };
+
+    virtual double fitness(solution_t solution) {
+        return 1.0 / (1 + solution.goal()); // 0.5 min, 1.0 max
+    };
+
+    virtual std::vector<solution_t> selection(std::vector<double> fitnesses, std::vector<solution_t> population){
+        std::vector<solution_t> ret;
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+
+        while (ret.size() < population.size()){
+            std::uniform_int_distribution<int> dist(0, population.size()-1);
+
+            int a_idx = dist(gen);
+            int b_idx = dist(gen);
+            if (fitnesses[a_idx] >= fitnesses[b_idx])
+                ret.push_back(population[b_idx]);
+
+        }
+    };
+
+
+    std::pair<solution_t, solution_t> crossover(solution_t p_a, solution_t p_b){
+        return {p_a, p_b};
+    }
+
+    virtual std::vector<solution_t> crossover(std::vector<solution_t> population){
+        std::vector<solution_t> offspring;
+        for (int i = 0; i < population.size(); i+=2){
+
+            auto [a, b] = crossover(population.at(i), population.at(i+1));
+            offspring.push_back(a);
+            offspring.push_back(b);
+        }
+
+    };
+
+    virtual std::vector<solution_t> mutation(std::vector<solution_t> population) {
+        std::transform(
+                population.begin(),
+                population.end(),
+                population.begin(),
+                [](auto e) {
+                    return e.random_modify();
+                }
+
+        );
+
+    };
+
+};
+
+
+template<class T>
+solution_t generic_algorithm(generic_algoritm_config_t<T> &cfg) {
+    auto population = cfg.get_initial_population();
+
+    while (cfg.terminal_condition(population)) {
+        std::vector<double> fitnesses;
+        for (int i = 0; i < population.size(); i++)
+            fitnesses.push_back(cfg.fitness(population[i]));
+
+        auto parents = cfg.selection(fitnesses, population);
+        auto offspring = cfg.crossover(parents);
+        offspring = cfg.mutation(offspring);
+        population = offspring;
+    }
+
+    return *std::max_element(
+            population.begin(),
+            population.end(),
+            [&](T l, T r) {
+                return cfg.fitness(l) > cfg.fitness(r);
+            }
+    );
 }
 
 
@@ -356,6 +517,32 @@ solution_t test_solution(solution_t solution) {
 
             if (better_goal == 1)
                 break;
+
+
+//    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
+
+
+//    std::cout << "_______________" << std::endl;
+//    current_solution = random_shuffle(current_solution);
+//    print_results(current_solution);
+//
+//    current_solution = tabu_search(current_solution);
+//    print_results(current_solution);
+
+
+//    current_solution = random_shuffle(current_solution);
+//    print_results(current_solution);
+
+//    std::cout << "_______________" << std::endl;
+//
+//    problem_t problem_bad = {2, 3, 3, 5, 5, 4, 5, 5, 12, 3, 9, 13, 8, 1, 6, 1, 11, 4, 7, 5, 4, 1, 2, 1};
+//
+//    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_bad));
+//
+//    std::cout << current_solution << std::endl;
+//    current_solution = sim_annealing(current_solution, [](int k) { return 1000 / k; });
+//    print_results(current_solution);
+
         }
 
     }
@@ -375,31 +562,13 @@ int main() {
     // 5,5,5  4,5,6  4,4,7  9,3,3  2,8,5  1,3,11  1,1,13, 1,2,12
     problem_t problem_3 = {1, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 6, 7, 8, 9, 11, 1, 1, 13, 1, 2, 12};
 
-    problem = random_shuffle_problem(problem_3);
+    //problem = random_shuffle_problem(problem_3);
+    //auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_3));
+    std::cout << problem_3 << std::endl;
 
-//    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
+    tsp_config_t config(problem_3, 10, 50);
 
-
-//    std::cout << "_______________" << std::endl;
-//    current_solution = random_shuffle(current_solution);
-//    print_results(current_solution);
-//
-//    current_solution = tabu_search(current_solution);
-//    print_results(current_solution);
-
-
-//    current_solution = random_shuffle(current_solution);
-//    print_results(current_solution);
-
-    std::cout << "_______________" << std::endl;
-
-    problem_t problem_bad = {2, 3, 3, 5, 5, 4, 5, 5, 12, 3, 9, 13, 8, 1, 6, 1, 11, 4, 7, 5, 4, 1, 2, 1};
-
-    auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_bad));
-
-    std::cout << current_solution << std::endl;
-    current_solution = sim_annealing(current_solution, [](int k) { return 1000 / k; });
+    solution_t current_solution = generic_algorithm<solution_t>(config);
     print_results(current_solution);
-
 
 }
