@@ -38,9 +38,6 @@ void print_results(solution_t solution, int i = NULL, double goal = NULL) {
 std::random_device rd;
 std::mt19937 gen(rd());
 
-bool size_of_problem_is_divided_by_3(problem_t problem) {
-    return problem.size() % 3 == 0;
-}
 
 void show_solution_of_problem(std::vector<int> solution) {
     int sum;
@@ -62,41 +59,6 @@ void show_solution_of_problem(std::vector<int> solution) {
     }
 }
 
-int sum_of_problem(problem_t problem) {
-    int sum_of_numbers = 0;
-    for (int number: problem)
-        sum_of_numbers += number;
-
-    return sum_of_numbers;
-}
-
-
-problem_t generate_random_problem(int number_of_subsets, int min_rd, int max_rd) {
-    std::vector<int> problem_set;
-    std::uniform_int_distribution<int> random(min_rd, max_rd);
-
-    for (int i = 0; i < number_of_subsets * 3; i++) {
-        problem_set.push_back(random(gen));
-    }
-
-    int sum = sum_of_problem(problem_set);
-
-    while (sum % number_of_subsets != 0) {
-        problem_set[random(gen)] += 1;
-        sum = sum_of_problem(problem_set);
-    }
-
-    return problem_set;
-}
-
-problem_t random_value_modify(problem_t problem_set, int min_rd, int max_rd) {
-    std::uniform_int_distribution<int> random_idx(0, problem_set.size());
-    std::uniform_int_distribution<int> random_value(min_rd, max_rd);
-
-    problem_set[random_idx(gen)] += random_value(gen);
-    return problem_set;
-}
-
 solution_t random_modify(solution_t current_solution) {
     std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
     int a = random_idx(gen);
@@ -112,11 +74,6 @@ solution_t random_modify(solution_t current_solution) {
 solution_t random_shuffle(solution_t solution) {
     std::shuffle(solution.begin(), solution.end(), gen);
     return solution;
-}
-
-problem_t random_shuffle_problem(problem_t problem) {
-    std::shuffle(problem.begin(), problem.end(), gen);
-    return problem;
 }
 
 
