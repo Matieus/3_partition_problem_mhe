@@ -10,7 +10,6 @@
 #include <functional>
 
 
-
 using problem_t = std::vector<int>;
 
 class solution_t : public std::vector<int> {
@@ -72,7 +71,7 @@ public:
         return solution;
     }
 
-     solution_t random_modify() {
+    solution_t random_modify() {
 
         auto current_solution = *this;
         std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
@@ -371,7 +370,7 @@ public:
     int iteration;
     int max_iterations;
 
-    tsp_config_t(problem_t p, int i, int population_s){
+    tsp_config_t(problem_t p, int i, int population_s) {
         problem = p;
         iteration = 0;
         max_iterations = i;
@@ -379,7 +378,7 @@ public:
 
     }
 
-    virtual bool terminal_condition(std::vector<solution_t>){
+    virtual bool terminal_condition(std::vector<solution_t>) {
         iteration++;
         return max_iterations >= iteration;
     };
@@ -398,14 +397,14 @@ public:
         return 1.0 / (1 + solution.goal()); // 0.5 min, 1.0 max
     };
 
-    virtual std::vector<solution_t> selection(std::vector<double> fitnesses, std::vector<solution_t> population){
+    virtual std::vector<solution_t> selection(std::vector<double> fitnesses, std::vector<solution_t> population) {
         std::vector<solution_t> ret;
 
         std::random_device rd;
         std::mt19937 gen(rd());
 
-        while (ret.size() < population.size()){
-            std::uniform_int_distribution<int> dist(0, population.size()-1);
+        while (ret.size() < population.size()) {
+            std::uniform_int_distribution<int> dist(0, population.size() - 1);
 
             int a_idx = dist(gen);
             int b_idx = dist(gen);
@@ -417,16 +416,16 @@ public:
     };
 
 
-    std::pair<solution_t, solution_t> crossover_p(solution_t p_a, solution_t p_b){
+    std::pair<solution_t, solution_t> crossover_p(solution_t p_a, solution_t p_b) {
         return {p_a, p_b};
     }
 
-    virtual std::vector<solution_t> crossover(std::vector<solution_t> population){
+    virtual std::vector<solution_t> crossover(std::vector<solution_t> population) {
         std::vector<solution_t> offspring;
 
-        for (int i = 0; i < population.size(); i+=2){
+        for (int i = 0; i < population.size(); i += 2) {
 
-            auto [a, b] = crossover_p(population.at(i), population.at(i+1));
+            auto [a, b] = crossover_p(population.at(i), population.at(i + 1));
             offspring.push_back(a);
             offspring.push_back(b);
         }
@@ -436,21 +435,22 @@ public:
     };
 
     virtual std::vector<solution_t> mutation(std::vector<solution_t> population) {
-
+        std::uniform_real_distribution<double> distr(0.0, 1.0);
         std::vector<solution_t> ret(population.size());
+        std::mt19937 rd;
 
         std::transform(
                 population.begin(),
                 population.end(),
                 ret.begin(),
-                [](auto e) {
-                    return e.random_modify();
-                }
-        );
-
+                [&](auto e) {
+                    if (distr(rd) > 0.9)
+                        return e.random_modify();
+                    else
+                        return e;
+                });
         return ret;
-    };
-
+    }
 };
 
 
@@ -475,12 +475,12 @@ solution_t generic_algorithm(generic_algoritm_config_t<T> &cfg) {
         offspring = cfg.mutation(offspring);
         population = offspring;
 
-        for(int i = 0; i < population.size(); i++){
-            std::cout << population[i] << "goal: " << population[i].goal() << " fit: " << cfg.fitness(population[i]) << std::endl;
-        }
+//        for (int i = 0; i < population.size(); i++) {
+//            std::cout << population[i] << "goal: " << population[i].goal() << " fit: " << cfg.fitness(population[i]) << std::endl;
+//        }
     }
 
-    solution_t s =  *std::min_element(
+    solution_t s = *std::min_element(
             population.begin(),
             population.end(),
             [&](T l, T r) {
@@ -597,7 +597,7 @@ int main() {
     //auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_3));
     std::cout << problem_3 << std::endl;
 
-    tsp_config_t config(problem_2, 50, 144);
+    tsp_config_t config(problem_3, 120, 50);
 
     solution_t current_solution = generic_algorithm<solution_t>(config);
     print_results(current_solution);
