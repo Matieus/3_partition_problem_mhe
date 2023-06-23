@@ -413,35 +413,42 @@ public:
                 ret.push_back(population[b_idx]);
 
         }
+        return ret;
     };
 
 
-    std::pair<solution_t, solution_t> crossover(solution_t p_a, solution_t p_b){
+    std::pair<solution_t, solution_t> crossover_p(solution_t p_a, solution_t p_b){
         return {p_a, p_b};
     }
 
     virtual std::vector<solution_t> crossover(std::vector<solution_t> population){
         std::vector<solution_t> offspring;
+
         for (int i = 0; i < population.size(); i+=2){
 
-            auto [a, b] = crossover(population.at(i), population.at(i+1));
+            auto [a, b] = crossover_p(population.at(i), population.at(i+1));
             offspring.push_back(a);
             offspring.push_back(b);
         }
 
+        return offspring;
+
     };
 
     virtual std::vector<solution_t> mutation(std::vector<solution_t> population) {
+
+        std::vector<solution_t> ret(population.size());
+
         std::transform(
                 population.begin(),
                 population.end(),
-                population.begin(),
+                ret.begin(),
                 [](auto e) {
                     return e.random_modify();
                 }
-
         );
 
+        return ret;
     };
 
 };
@@ -452,23 +459,47 @@ solution_t generic_algorithm(generic_algoritm_config_t<T> &cfg) {
     auto population = cfg.get_initial_population();
 
     while (cfg.terminal_condition(population)) {
+
         std::vector<double> fitnesses;
-        for (int i = 0; i < population.size(); i++)
+        for (int i = 0; i < population.size(); i++) {
             fitnesses.push_back(cfg.fitness(population[i]));
+        }
+
 
         auto parents = cfg.selection(fitnesses, population);
+
+        std::cout << std::endl << parents.size() << std::endl;
+
+
         auto offspring = cfg.crossover(parents);
         offspring = cfg.mutation(offspring);
         population = offspring;
+
+        for(int i = 0; i < population.size(); i++){
+            std::cout << population[i] << "goal: " << population[i].goal() << " fit: " << cfg.fitness(population[i]) << std::endl;
+        }
     }
 
-    return *std::max_element(
+    solution_t s =  *std::min_element(
             population.begin(),
             population.end(),
             [&](T l, T r) {
-                return cfg.fitness(l) > cfg.fitness(r);
+                return cfg.fitness(l) < cfg.fitness(r);
             }
     );
+
+//    solution_t best_solution = population[0];
+//    for(int i = 0; i < population.size(); i++){
+//        if (cfg.fitness(population[i]) <= cfg.fitness(best_solution)){
+//            best_solution = population[i];
+//        }
+//
+//    }
+//    print_results(best_solution);
+
+
+    //print_results(s);
+    return s;
 }
 
 
@@ -566,7 +597,7 @@ int main() {
     //auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_3));
     std::cout << problem_3 << std::endl;
 
-    tsp_config_t config(problem_3, 10, 50);
+    tsp_config_t config(problem_2, 50, 144);
 
     solution_t current_solution = generic_algorithm<solution_t>(config);
     print_results(current_solution);
