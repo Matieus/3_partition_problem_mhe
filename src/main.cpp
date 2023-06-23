@@ -9,106 +9,9 @@
 #include <set>
 #include <functional>
 
-
-using problem_t = std::vector<int>;
-
-class solution_t : public std::vector<int> {
-public:
-    std::shared_ptr<problem_t> problem;
-    int average; // average for each subset of 3 items
-
-    int sum_of_problem() {
-        int sum_of_numbers = 0;
-        for (auto number: *this) {
-            sum_of_numbers += number;
-        }
-
-        return sum_of_numbers;
-    }
-
-    static solution_t for_problem(std::shared_ptr<problem_t> problem_) {
-        solution_t solution;
-
-        for (auto number: *problem_)
-            solution.push_back(number);
-        solution.problem = problem_;
-        solution.average = solution.sum_of_problem() * 3 / problem_->size();
-        return solution;
-    }
-
-    double goal() {
-        // returns values from 0 to 1
-        // result 1 is the best
-
-        double result = 0;
-        auto &s = *this;
-        int sum;
-
-        for (int i = 0; i < size(); i += 3) {
-            sum = s[i] + s[i + 1] + s[i + 2];
-
-            if (sum == s.average) {
-                result += 1;
-            }
-        }
-        return result * 3 / size();
-    }
-
-    solution_t random_shuffle() {
-        auto &s = *this;
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::shuffle(s.begin(), s.end(), gen);
-        return s;
-    }
-
-    static solution_t random_solution(problem_t problem) {
-
-        auto solution = solution_t::for_problem(std::make_shared<problem_t>(problem));
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::shuffle(solution.begin(), solution.end(), gen);
-        return solution;
-    }
-
-    solution_t random_modify() {
-
-        auto current_solution = *this;
-        std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
-        std::random_device rd;
-        std::mt19937 gen(rd());
-
-        int a = random_idx(gen);
-        int b = random_idx(gen);
-        if (a == b) {
-            b = (a + 1) & (current_solution.size() - 1);
-
-        }
-        std::swap(current_solution[a], current_solution[b]);
-        return current_solution;
-    }
-
-};
-
-
-std::ostream &operator<<(std::ostream &o, const problem_t v) {
-    o << "{";
-    for (auto e: v)
-        o << e << ", ";
-    o << "}";
-    return o;
-}
-
-std::ostream &operator<<(std::ostream &o, const solution_t solution) {
-    o << "{ ";
-    for (int i = 0; i < solution.size(); i += 3) {
-        o << "{" << solution[i] << " ";
-        o << solution[i + 1] << " ";
-        o << solution[i + 2] << "} ";
-    }
-    o << "}";
-    return o;
-}
+#include "solution_t.h"
+#include "problem_t.h"
+using namespace mhe;
 
 void print_results(solution_t solution, int i = NULL, double goal = NULL) {
 
@@ -387,9 +290,8 @@ public:
         std::vector<solution_t> ret;
         for (int i = 0; i < population_size; i++) {
             ret.push_back(solution_t::random_solution(problem));
-            std::cout << problem << std::endl;
-
         }
+
         return ret;
     };
 
@@ -467,17 +369,10 @@ solution_t generic_algorithm(generic_algoritm_config_t<T> &cfg) {
 
 
         auto parents = cfg.selection(fitnesses, population);
-
-        std::cout << std::endl << parents.size() << std::endl;
-
-
         auto offspring = cfg.crossover(parents);
         offspring = cfg.mutation(offspring);
         population = offspring;
 
-//        for (int i = 0; i < population.size(); i++) {
-//            std::cout << population[i] << "goal: " << population[i].goal() << " fit: " << cfg.fitness(population[i]) << std::endl;
-//        }
     }
 
     solution_t s = *std::min_element(
@@ -488,17 +383,6 @@ solution_t generic_algorithm(generic_algoritm_config_t<T> &cfg) {
             }
     );
 
-//    solution_t best_solution = population[0];
-//    for(int i = 0; i < population.size(); i++){
-//        if (cfg.fitness(population[i]) <= cfg.fitness(best_solution)){
-//            best_solution = population[i];
-//        }
-//
-//    }
-//    print_results(best_solution);
-
-
-    //print_results(s);
     return s;
 }
 
@@ -593,9 +477,10 @@ int main() {
     // 5,5,5  4,5,6  4,4,7  9,3,3  2,8,5  1,3,11  1,1,13, 1,2,12
     problem_t problem_3 = {1, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5, 5, 6, 7, 8, 9, 11, 1, 1, 13, 1, 2, 12};
 
-    //problem = random_shuffle_problem(problem_3);
-    //auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem_3));
+    //auto current_solution = solution_t::for_problem(make_shared<problem_t>(problem));
+
     std::cout << problem_3 << std::endl;
+    std::cout << "_______________" << std::endl;
 
     tsp_config_t config(problem_3, 120, 50);
 
