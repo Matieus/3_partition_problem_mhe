@@ -31,14 +31,19 @@ namespace mhe {
 
         double goal();
 
-        solution_t random_shuffle();
+        solution_t random_shuffle(std::mt19937 &rgen);
 
-        static solution_t random_solution(problem_t problem);
+        static solution_t random_solution(problem_t problem, std::mt19937 &rgen);
 
-        solution_t random_modify();
+        solution_t random_modify(std::mt19937 &rgen);
 
         };
 
+    solution_t random_solution(problem_t problem, std::mt19937 &rgen);
+    solution_t random_modify(std::mt19937 &rgen);
+    void show_solution_of_problem(std::vector<int> solution);
+    std::vector<solution_t> generate_neighbours(solution_t solution);
+    solution_t best_neighbour(solution_t current_solution);
     std::ostream &operator<<(std::ostream &o, const solution_t solution);
 
 } // mhe

@@ -43,38 +43,85 @@ namespace mhe {
         return result * 3 / size();
     }
 
-    solution_t solution_t::random_shuffle() {
+    solution_t solution_t::random_shuffle(std::mt19937 &rgen) {
         auto &s = *this;
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::shuffle(s.begin(), s.end(), gen);
+        std::shuffle(s.begin(), s.end(), rgen);
         return s;
     }
 
-    solution_t solution_t::random_solution(problem_t problem) {
+    solution_t solution_t::random_solution(problem_t problem, std::mt19937 &rgen) {
 
         auto solution = solution_t::for_problem(std::make_shared<problem_t>(problem));
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::shuffle(solution.begin(), solution.end(), gen);
+
+        std::shuffle(solution.begin(), solution.end(), rgen);
         return solution;
     }
 
-    solution_t solution_t::random_modify() {
+    solution_t solution_t::random_modify(std::mt19937 &rgen) {
 
         auto current_solution = *this;
         std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
-        std::random_device rd;
-        std::mt19937 gen(rd());
 
-        int a = random_idx(gen);
-        int b = random_idx(gen);
+
+        int a = random_idx(rgen);
+        int b = random_idx(rgen);
         if (a == b) {
             b = (a + 1) & (current_solution.size() - 1);
 
         }
         std::swap(current_solution[a], current_solution[b]);
         return current_solution;
+    }
+
+
+
+    void show_solution_of_problem(std::vector<int> solution) {
+        int sum;
+        for (int i = 0; i < solution.size(); i++)
+            std::cout << solution[i];
+
+        std::cout << std::endl;
+
+        for (int i = 0; i < solution.size(); i += 3) {
+            for (int j = 0; j < 3; j++) {
+                sum += solution[i + j];
+                std::cout << std::to_string(solution[i + j]);
+                std::cout << ", ";
+            }
+            std::cout << "sum: ";
+            std::cout << sum;
+            std::cout << std::endl;
+            sum = 0;
+        }
+    }
+
+
+    std::vector<solution_t> generate_neighbours(solution_t solution) {
+        std::vector<solution_t> neighbours;
+        solution_t neighbour;
+
+        for (int k = 1; k < solution.size(); k++) {
+            for (int i = 0; i < solution.size(); i++) {
+                neighbour = solution;
+                std::swap(neighbour[i], neighbour[(i + k) % solution.size()]);
+                neighbours.push_back(neighbour);
+            }
+        }
+        return neighbours;
+
+    }
+
+    solution_t best_neighbour(solution_t current_solution) {
+        std::vector<solution_t> neighbours = generate_neighbours(current_solution);
+
+        solution_t best_solution = current_solution;
+
+        for (auto neighbour: neighbours) {
+            if (best_solution.goal() <= neighbour.goal()) {
+                best_solution = neighbour;
+            }
+        }
+        return best_solution;
     }
 
 

@@ -11,6 +11,10 @@
 
 #include "solution_t.h"
 #include "problem_t.h"
+
+std::random_device rd;
+std::mt19937 rgen(rd());
+
 using namespace mhe;
 
 void print_results(solution_t solution, int i = NULL, double goal = NULL) {
@@ -34,77 +38,6 @@ void print_results(solution_t solution, int i = NULL, double goal = NULL) {
     std::cout << "\n\n";
 }
 
-
-std::random_device rd;
-std::mt19937 gen(rd());
-
-
-void show_solution_of_problem(std::vector<int> solution) {
-    int sum;
-    for (int i = 0; i < solution.size(); i++)
-        std::cout << solution[i];
-
-    std::cout << std::endl;
-
-    for (int i = 0; i < solution.size(); i += 3) {
-        for (int j = 0; j < 3; j++) {
-            sum += solution[i + j];
-            std::cout << std::to_string(solution[i + j]);
-            std::cout << ", ";
-        }
-        std::cout << "sum: ";
-        std::cout << sum;
-        std::cout << std::endl;
-        sum = 0;
-    }
-}
-
-solution_t random_modify(solution_t current_solution) {
-    std::uniform_int_distribution<int> random_idx(0, current_solution.size() - 1);
-    int a = random_idx(gen);
-    int b = random_idx(gen);
-    if (a == b) {
-        b = (a + 1) & (current_solution.size() - 1);
-
-    }
-    std::swap(current_solution[a], current_solution[b]);
-    return current_solution;
-}
-
-solution_t random_shuffle(solution_t solution) {
-    std::shuffle(solution.begin(), solution.end(), gen);
-    return solution;
-}
-
-
-std::vector<solution_t> generate_neighbours(solution_t solution) {
-    std::vector<solution_t> neighbours;
-    solution_t neighbour;
-
-    for (int k = 1; k < solution.size(); k++) {
-        for (int i = 0; i < solution.size(); i++) {
-            neighbour = solution;
-            std::swap(neighbour[i], neighbour[(i + k) % solution.size()]);
-            neighbours.push_back(neighbour);
-        }
-    }
-    return neighbours;
-
-}
-
-solution_t best_neighbour(solution_t current_solution) {
-    std::vector<solution_t> neighbours = generate_neighbours(current_solution);
-
-    solution_t best_solution = current_solution;
-
-    for (auto neighbour: neighbours) {
-        if (best_solution.goal() <= neighbour.goal()) {
-            best_solution = neighbour;
-        }
-    }
-    return best_solution;
-}
-
 solution_t deterministic_hill_climb(solution_t solution) {
     solution_t new_solution;
 
@@ -122,9 +55,9 @@ solution_t deterministic_hill_climb(solution_t solution) {
     return solution;
 }
 
-solution_t random_hill_climb(solution_t solution) {
+solution_t random_hill_climb(solution_t solution, std::mt19937 &rgen) {
     for (int i = 0; i < 5040; i++) {
-        auto new_solution = random_modify(solution);
+        auto new_solution = solution.random_modify(rgen);
         if (new_solution.goal() >= solution.goal()) {
             solution = new_solution;
             std::cout << "[random_hill_climb]" << std::endl;
@@ -180,13 +113,15 @@ solution_t tabu_search(solution_t solution) {
     return best_global;
 }
 
-solution_t sim_annealing(const solution_t solution, std::function<double(int)> T) {
+solution_t sim_annealing(const solution_t solution, std::function<double(int)> T, std::mt19937 &rgen) {
     auto best_solution = solution;
-    auto s_curren_solution = solution;
+    auto new_solution = solution;
+
+    auto s_current_solution = solution;
     for (int i = 1; i < 5040; i++) {
-        auto new_solution = random_modify(s_curren_solution);
-        if (new_solution.goal() >= s_curren_solution.goal()) {
-            s_curren_solution = new_solution;
+        new_solution = best_solution.random_modify(rgen);
+        if (new_solution.goal() >= s_current_solution.goal()) {
+            s_current_solution = new_solution;
             if (new_solution.goal() >= best_solution.goal()) {
                 best_solution = new_solution;
             }
@@ -194,9 +129,9 @@ solution_t sim_annealing(const solution_t solution, std::function<double(int)> T
         } else {
             std::uniform_real_distribution<double> u(0.0, 1.0);
             if (
-                    u(gen) < std::exp(-std::abs(new_solution.goal() - s_curren_solution.goal()) / T(i))
+                    u(rgen) < std::exp(-std::abs(new_solution.goal() - s_current_solution.goal()) / T(i))
                     ) {
-                s_curren_solution = new_solution;
+                s_current_solution = new_solution;
             }
 
         }
@@ -230,12 +165,11 @@ public:
     int iteration;
     int max_iterations;
 
-    tsp_config_t(problem_t p, int i, int population_s) {
+    tsp_config_t(problem_t p, int i, int population_s, std::mt19937 &rgen) {
         problem = p;
         iteration = 0;
         max_iterations = i;
         population_size = population_s;
-
     }
 
     virtual bool terminal_condition(std::vector<solution_t>) {
@@ -246,7 +180,7 @@ public:
     virtual std::vector<solution_t> get_initial_population() {
         std::vector<solution_t> ret;
         for (int i = 0; i < population_size; i++) {
-            ret.push_back(solution_t::random_solution(problem));
+            ret.push_back(solution_t::random_solution(problem, rgen));
         }
 
         return ret;
@@ -304,7 +238,7 @@ public:
                 ret.begin(),
                 [&](auto e) {
                     if (distr(rd) > 0.9)
-                        return e.random_modify();
+                        return e.random_modify(rgen);
                     else
                         return e;
                 });
@@ -378,7 +312,7 @@ solution_t test_solution(solution_t solution) {
     double better_goal = 0;
 
     for (int i = 0; i < 5040; i++) {
-        better_solution = random_modify(better_solution);
+        better_solution = better_solution.random_modify(rgen);
         better_goal = better_solution.goal();
 
         if (better_goal > current_goal) {
@@ -439,7 +373,7 @@ int main() {
     std::cout << problem_3 << std::endl;
     std::cout << "_______________" << std::endl;
 
-    tsp_config_t config(problem_3, 120, 50);
+    tsp_config_t config(problem_3, 120, 50, rgen);
 
     solution_t current_solution = generic_algorithm<solution_t>(config);
     print_results(current_solution);
